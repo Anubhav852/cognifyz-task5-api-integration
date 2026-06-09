@@ -4,313 +4,426 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Cognifyz Task 5 - API Integration</title>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
 tailwind.config = {
+  darkMode: "class",
   theme: {
     extend: {
+      colors: {
+        "primary": "#000000", "on-primary": "#ffffff", "primary-container": "#1c1b1b",
+        "on-primary-container": "#858383", "primary-fixed": "#e5e2e1", "primary-fixed-dim": "#c8c6c5",
+        "secondary": "#585f6c", "on-secondary": "#ffffff", "secondary-container": "#dce2f3",
+        "on-secondary-container": "#5e6572", "background": "#f8f9fa", "on-background": "#191c1d",
+        "surface": "#f8f9fa", "on-surface": "#191c1d", "on-surface-variant": "#444748",
+        "surface-variant": "#e1e3e4", "surface-dim": "#d9dadb", "surface-bright": "#f8f9fa",
+        "surface-container-lowest": "#ffffff", "surface-container-low": "#f3f4f5",
+        "surface-container": "#edeeef", "surface-container-high": "#e7e8e9",
+        "surface-container-highest": "#e1e3e4", "outline": "#747878", "outline-variant": "#c4c7c7",
+        "error": "#ba1a1a", "on-error": "#ffffff", "error-container": "#ffdad6",
+        "on-error-container": "#93000a", "inverse-surface": "#2e3132", "inverse-on-surface": "#f0f1f2",
+      },
+      borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+      spacing: { "base": "8px", "xs": "4px", "sm": "12px", "md": "24px", "lg": "48px", "xl": "80px", "gutter": "24px", "container-max": "1280px" },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        headline: ['Hanken Grotesk', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        "label-sm": ["JetBrains Mono"], "headline-md": ["Hanken Grotesk"],
+        "body-md": ["Inter"], "display-lg": ["Hanken Grotesk"],
+        "headline-lg": ["Hanken Grotesk"], "body-lg": ["Inter"]
+      },
+      fontSize: {
+        "label-sm": ["12px", {"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"500"}],
+        "headline-md": ["24px", {"lineHeight":"1.3","fontWeight":"600"}],
+        "body-md": ["16px", {"lineHeight":"1.5","fontWeight":"400"}],
+        "display-lg": ["48px", {"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],
+        "headline-lg": ["32px", {"lineHeight":"1.2","fontWeight":"600"}],
+        "body-lg": ["18px", {"lineHeight":"1.6","fontWeight":"400"}]
       }
     }
   }
 }
 </script>
 <style>
+  body { background-color: #f8f9fa; color: #191c1d; -webkit-font-smoothing: antialiased; min-height: 100dvh; }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
-  .air-shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 10px 24px rgba(0,0,0,0.04); }
-  .glass-header { backdrop-filter: blur(12px); background: rgba(248,249,250,0.85); }
+  .glass-header { backdrop-filter: blur(12px); background: rgba(248,249,250,0.7); }
+  .dual-shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 10px 24px rgba(0,0,0,0.04); }
   .fade-in { animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  #loadingBar { transition: width 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  #loadingBar { transition: width 0.3s ease, opacity 0.2s ease; }
+  input:focus, select:focus { outline: none !important; border-color: #000 !important; box-shadow: none !important; }
 </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+<body class="font-body-md text-body-md">
 
 <!-- Loading Bar -->
-<div class="fixed top-0 left-0 h-[2px] bg-black w-0 z-[100]" id="loadingBar"></div>
+<div class="fixed top-0 left-0 h-[2px] bg-primary w-0 z-[100]" id="loadingBar"></div>
 
 <!-- Header -->
-<header class="sticky top-0 z-50 glass-header border-b border-gray-100">
-  <div class="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
-    <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-black">grid_view</span>
-      <span class="font-headline font-bold text-lg tracking-tight">Cognifyz Task 5</span>
+<header class="w-full top-0 sticky glass-header z-50 border-b border-outline-variant/10 shadow-sm">
+  <div class="flex justify-between items-center px-gutter py-sm max-w-container-max mx-auto h-16">
+    <div class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-primary cursor-pointer">grid_view</span>
+      <h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary">Cognifyz Task 5</h1>
     </div>
-    <div class="flex items-center gap-3">
-      <span class="font-mono text-xs text-gray-400 uppercase tracking-widest" id="apiStatus">● Connecting...</span>
+    <nav class="hidden md:flex gap-8 items-center">
+      <a class="font-label-sm text-label-sm text-primary border-b-2 border-primary pb-1" href="#">Dashboard</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">Directory</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors pb-1" href="#">API Docs</a>
+    </nav>
+    <div class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+      <div class="w-8 h-8 bg-surface-variant rounded-full flex items-center justify-center border border-outline-variant/20">
+        <span class="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="flex-grow max-w-6xl mx-auto w-full px-6 py-10">
-
-  <!-- Page Title -->
-  <div class="mb-8">
-    <span class="font-mono text-xs uppercase tracking-widest text-gray-400">Level 3 — Advanced</span>
-    <h1 class="font-headline font-bold text-4xl tracking-tight mt-1">API Integration</h1>
-    <p class="text-gray-500 mt-1">RESTful CRUD operations with live server interaction.</p>
-  </div>
+<main class="max-w-container-max mx-auto px-gutter py-lg">
 
   <!-- Metrics -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-    <div class="bg-white air-shadow rounded-xl border border-black/5 p-5 flex flex-col gap-2">
-      <span class="font-mono text-xs uppercase text-gray-400 tracking-widest">Total Users</span>
-      <span class="font-headline font-bold text-5xl" id="metricTotal">—</span>
-      <div class="h-[2px] bg-gray-100 mt-auto"><div class="h-full bg-black" id="metricBar" style="width:0%"></div></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">
+    <div class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5">
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-xs">Total Users</p>
+      <div class="flex items-baseline gap-base">
+        <h2 class="font-display-lg text-display-lg text-primary tracking-tighter" id="metricTotal">0</h2>
+        <span class="font-label-sm text-label-sm bg-surface-container text-on-surface-variant px-2 py-0.5 rounded">Active</span>
+      </div>
+      <div class="mt-lg w-full bg-surface-container h-[2px]">
+        <div class="bg-primary h-full transition-all duration-500" id="metricBar" style="width:0%"></div>
+      </div>
     </div>
-    <div class="bg-white air-shadow rounded-xl border border-black/5 p-5 flex flex-col gap-2">
-      <span class="font-mono text-xs uppercase text-gray-400 tracking-widest">API Status</span>
-      <span class="font-headline font-bold text-5xl text-green-600">OK</span>
-      <div class="h-[2px] bg-gray-100 mt-auto"><div class="h-full bg-green-500 w-full"></div></div>
+    <div class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5">
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-xs">API Status</p>
+      <div class="flex items-center gap-base">
+        <h2 class="font-display-lg text-display-lg text-primary tracking-tighter">OK</h2>
+        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+      </div>
+      <div class="mt-lg">
+        <p class="font-label-sm text-label-sm text-on-surface-variant">Last Action: <span class="font-medium text-primary" id="lastAction">—</span></p>
+      </div>
     </div>
-    <div class="bg-white air-shadow rounded-xl border border-black/5 p-5 flex flex-col gap-2">
-      <span class="font-mono text-xs uppercase text-gray-400 tracking-widest">Last Action</span>
-      <span class="font-headline font-bold text-xl mt-2 text-gray-600" id="lastAction">None</span>
-      <div class="h-[2px] bg-gray-100 mt-auto"><div class="h-full bg-black w-3/4"></div></div>
+    <div class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5 hidden lg:block">
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-xs">Throughput</p>
+      <div class="flex items-baseline gap-base">
+        <h2 class="font-display-lg text-display-lg text-primary tracking-tighter">842</h2>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">req/s</span>
+      </div>
+      <p class="mt-lg font-label-sm text-label-sm text-on-surface-variant">Latency: <span class="font-medium text-primary">12ms</span></p>
+    </div>
+    <div class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5 hidden lg:block">
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-xs">Security Score</p>
+      <div class="flex items-baseline gap-base">
+        <h2 class="font-display-lg text-display-lg text-primary tracking-tighter">98.2</h2>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">%</span>
+      </div>
+      <p class="mt-lg font-label-sm text-label-sm text-on-surface-variant">Threats Blocked: <span class="font-medium text-primary">14</span></p>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Body Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-xl">
 
-    <!-- Form Panel -->
-    <div class="lg:col-span-1">
-      <div class="bg-white air-shadow rounded-xl border border-black/5 p-6 sticky top-20">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="font-headline font-bold text-xl" id="formTitle">Add User</h2>
-          <span class="font-mono text-xs text-gray-400 uppercase" id="formMode">POST</span>
+    <!-- Left: Form + Response -->
+    <div class="lg:col-span-5 space-y-xl">
+
+      <!-- Add / Edit User Form -->
+      <section class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5">
+        <div class="flex justify-between items-center mb-lg">
+          <h3 class="font-headline-md text-headline-md text-primary" id="formTitle">Add User</h3>
+          <span class="font-label-sm text-label-sm text-on-surface-variant uppercase" id="formMethod">POST</span>
         </div>
-        <div class="space-y-4">
+        <div class="space-y-base">
           <input type="hidden" id="editId"/>
-          <div class="space-y-1">
-            <label class="font-mono text-xs uppercase text-gray-400 block">Name</label>
-            <input id="inputName" type="text" placeholder="Full name" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all"/>
-            <span class="font-mono text-xs text-red-500 hidden" id="errName"></span>
+          <div class="space-y-xs">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase block">Full Name</label>
+            <input id="inputName" type="text" placeholder="e.g. Alexander Vance" class="w-full bg-white border border-outline-variant/30 rounded px-4 py-3 transition-all font-body-md"/>
+            <span class="font-label-sm text-label-sm text-error hidden" id="errName"></span>
           </div>
-          <div class="space-y-1">
-            <label class="font-mono text-xs uppercase text-gray-400 block">Email</label>
-            <input id="inputEmail" type="email" placeholder="name@system.io" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all"/>
-            <span class="font-mono text-xs text-red-500 hidden" id="errEmail"></span>
+          <div class="space-y-xs">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase block">Email Address</label>
+            <input id="inputEmail" type="email" placeholder="vance@core-system.sh" class="w-full bg-white border border-outline-variant/30 rounded px-4 py-3 transition-all font-body-md"/>
+            <span class="font-label-sm text-label-sm text-error hidden" id="errEmail"></span>
           </div>
-          <div class="space-y-1">
-            <label class="font-mono text-xs uppercase text-gray-400 block">Role</label>
-            <select id="inputRole" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all">
+          <div class="space-y-xs pb-lg">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase block">Role Assignment</label>
+            <select id="inputRole" class="w-full bg-white border border-outline-variant/30 rounded px-4 py-3 transition-all font-body-md appearance-none">
               <option value="">Select role</option>
               <option value="Admin">Admin</option>
               <option value="Editor">Editor</option>
               <option value="Viewer">Viewer</option>
             </select>
-            <span class="font-mono text-xs text-red-500 hidden" id="errRole"></span>
+            <span class="font-label-sm text-label-sm text-error hidden" id="errRole"></span>
           </div>
-          <div id="formMsg" class="hidden font-mono text-xs p-3 rounded-lg"></div>
-          <button onclick="handleSubmit()" class="w-full bg-black text-white py-3 rounded-lg font-mono text-xs uppercase tracking-widest hover:opacity-80 active:scale-[0.98] transition-all flex items-center justify-center gap-2" id="submitBtn">
-            <span class="material-symbols-outlined text-[16px]">add</span>
-            Add User
+          <div id="formMsg" class="hidden font-label-sm text-label-sm p-3 rounded"></div>
+          <button onclick="handleSubmit()" id="submitBtn" class="w-full bg-primary text-on-primary py-4 rounded font-label-sm text-label-sm uppercase tracking-widest hover:bg-zinc-800 transition-colors active:scale-[0.98] duration-150">
+            ADD USER
           </button>
-          <button onclick="resetForm()" class="w-full border border-gray-200 text-gray-500 py-2.5 rounded-lg font-mono text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">
+          <button onclick="resetForm()" class="w-full border border-outline-variant/20 text-on-surface-variant py-3 rounded font-label-sm text-label-sm uppercase tracking-widest hover:bg-surface-container-low transition-all">
             Reset
           </button>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- Users List -->
-    <div class="lg:col-span-2 flex flex-col gap-4">
-      <div class="flex justify-between items-center">
-        <h2 class="font-headline font-bold text-xl">User Directory</h2>
-        <div class="flex items-center gap-3">
-          <span class="font-mono text-xs text-gray-400" id="userCount">0 entries</span>
-          <button onclick="fetchUsers()" class="flex items-center gap-1 font-mono text-xs text-gray-400 hover:text-black transition-colors">
-            <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh
-          </button>
+      <!-- Server Response Buffer -->
+      <section>
+        <div class="flex justify-between items-center mb-base">
+          <h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase">Server Response Buffer</h4>
+          <span class="font-label-sm text-label-sm text-primary">LIVE_STREAM</span>
         </div>
-      </div>
+        <div class="bg-primary text-white p-lg rounded font-label-sm text-label-sm overflow-x-auto leading-relaxed dual-shadow">
+          <pre class="whitespace-pre-wrap" id="apiResponse">Waiting for API response...</pre>
+        </div>
+      </section>
 
-      <!-- API Response Box -->
-      <div class="bg-black rounded-xl p-4 font-mono text-xs text-green-400 min-h-[60px] flex items-start gap-2">
-        <span class="text-gray-500 mt-0.5">›</span>
-        <pre id="apiResponse" class="whitespace-pre-wrap break-all">Waiting for API response...</pre>
-      </div>
-
-      <!-- User Cards -->
-      <div id="userList" class="flex flex-col gap-3"></div>
-
-      <!-- Empty State -->
-      <div id="emptyState" class="hidden border-2 border-dashed border-gray-200 rounded-xl p-10 text-center">
-        <span class="material-symbols-outlined text-4xl text-gray-300">group_off</span>
-        <p class="font-mono text-xs text-gray-400 mt-2 uppercase tracking-widest">No users found</p>
-      </div>
     </div>
+
+    <!-- Right: User Directory Table -->
+    <div class="lg:col-span-7">
+      <section class="bg-surface-container-lowest p-lg rounded-lg dual-shadow border border-black/5 h-full">
+        <div class="flex justify-between items-end mb-lg">
+          <div>
+            <h3 class="font-headline-md text-headline-md text-primary">User Directory</h3>
+            <p class="font-body-md text-on-surface-variant" id="userCount">Managing active authorizations.</p>
+          </div>
+          <div class="flex items-center gap-md">
+            <button onclick="fetchUsers()" class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[18px]">refresh</span>
+            </button>
+            <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">filter_list</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-outline-variant/10">
+                <th class="py-4 font-label-sm text-label-sm text-on-surface-variant uppercase">User</th>
+                <th class="py-4 font-label-sm text-label-sm text-on-surface-variant uppercase hidden md:table-cell">Role</th>
+                <th class="py-4 font-label-sm text-label-sm text-on-surface-variant uppercase text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody" class="divide-y divide-outline-variant/10"></tbody>
+          </table>
+        </div>
+        <!-- Empty state -->
+        <div id="emptyState" class="hidden py-xl text-center">
+          <span class="material-symbols-outlined text-4xl text-outline-variant">group_off</span>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-2">No users found</p>
+        </div>
+        <div class="mt-lg pt-lg border-t border-outline-variant/10 flex justify-between items-center">
+          <p class="font-label-sm text-label-sm text-on-surface-variant" id="showingCount">Showing 0 users</p>
+          <div class="flex gap-xs">
+            <button class="p-2 border border-outline-variant/20 rounded hover:bg-surface-container-low transition-all">
+              <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+            </button>
+            <button class="p-2 border border-outline-variant/20 rounded hover:bg-surface-container-low transition-all">
+              <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
   </div>
 </main>
 
-<footer class="border-t border-gray-100 bg-white mt-10">
-  <div class="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-2">
-    <span class="font-mono text-xs uppercase tracking-widest text-gray-400">© 2024 Cognifyz Task 5 — API Integration</span>
-    <span class="font-mono text-xs text-gray-400">Node.js + Express + Vanilla JS</span>
+<!-- Footer -->
+<footer class="w-full border-t border-outline-variant/10 bg-surface mt-xl">
+  <div class="max-w-container-max mx-auto px-gutter py-lg flex flex-col md:flex-row justify-between items-center gap-base">
+    <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">© 2024 Cognifyz Technologies. All rights reserved.</p>
+    <div class="flex gap-lg">
+      <a class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors" href="#">Security Protocol</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors" href="#">API Documentation</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors" href="#">Legal</a>
+    </div>
   </div>
 </footer>
+
+<!-- Mobile Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 md:hidden bg-surface-container-lowest border-t border-outline-variant/10 glass-header px-gutter py-xs flex justify-around items-center z-50">
+  <div class="flex flex-col items-center gap-1 py-2 text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">dashboard</span>
+    <span class="font-label-sm text-[10px] uppercase">Dash</span>
+  </div>
+  <div class="flex flex-col items-center gap-1 py-2 text-on-surface-variant">
+    <span class="material-symbols-outlined">group</span>
+    <span class="font-label-sm text-[10px] uppercase">Users</span>
+  </div>
+  <div class="flex flex-col items-center gap-1 py-2 text-on-surface-variant">
+    <span class="material-symbols-outlined">security</span>
+    <span class="font-label-sm text-[10px] uppercase">Security</span>
+  </div>
+  <div class="flex flex-col items-center gap-1 py-2 text-on-surface-variant">
+    <span class="material-symbols-outlined">settings</span>
+    <span class="font-label-sm text-[10px] uppercase">Config</span>
+  </div>
+</nav>
+
+<!-- Background Decoration -->
+<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden opacity-50">
+  <div class="absolute -top-1/4 -left-1/4 w-full h-full bg-gradient-to-br from-surface-container to-transparent rounded-full blur-[120px]"></div>
+  <div class="absolute -bottom-1/4 -right-1/4 w-full h-full bg-gradient-to-tl from-surface-variant to-transparent rounded-full blur-[120px]"></div>
+</div>
 
 <script>
 const API = '/api/users';
 let editingId = null;
 
-// ── Loading bar ───────────────────────────────────────────────────
 function animateBar() {
   const bar = document.getElementById('loadingBar');
   bar.style.width = '60%';
   setTimeout(() => bar.style.width = '100%', 300);
-  setTimeout(() => { bar.style.opacity = '0'; }, 600);
-  setTimeout(() => { bar.style.width = '0'; bar.style.opacity = '1'; }, 800);
+  setTimeout(() => bar.style.opacity = '0', 600);
+  setTimeout(() => { bar.style.width = '0'; bar.style.opacity = '1'; }, 850);
 }
 
-// ── Show API response ─────────────────────────────────────────────
 function showResponse(data) {
   document.getElementById('apiResponse').textContent = JSON.stringify(data, null, 2);
 }
 
-// ── Set last action ───────────────────────────────────────────────
-function setAction(text) {
+function setLastAction(text) {
   document.getElementById('lastAction').textContent = text;
 }
 
-// ── Fetch all users ───────────────────────────────────────────────
 async function fetchUsers() {
   animateBar();
   try {
-    const res = await fetch(API);
+    const res  = await fetch(API);
     const data = await res.json();
     showResponse(data);
     renderUsers(data.data);
     document.getElementById('metricTotal').textContent = data.count;
     document.getElementById('metricBar').style.width = Math.min(data.count * 15, 100) + '%';
-    document.getElementById('userCount').textContent = data.count + ' ' + (data.count === 1 ? 'entry' : 'entries');
-    document.getElementById('apiStatus').textContent = '● Connected';
-    document.getElementById('apiStatus').classList.add('text-green-500');
-    document.getElementById('apiStatus').classList.remove('text-gray-400');
-    setAction('GET /api/users');
+    document.getElementById('userCount').textContent = 'Managing ' + data.count + ' active authorization' + (data.count !== 1 ? 's' : '') + '.';
+    document.getElementById('showingCount').textContent = 'Showing ' + data.count + ' user' + (data.count !== 1 ? 's' : '');
+    setLastAction('GET /api/users');
   } catch (err) {
     document.getElementById('apiResponse').textContent = 'Error: ' + err.message;
-    document.getElementById('apiStatus').textContent = '● Offline';
   }
 }
 
-// ── Render users ──────────────────────────────────────────────────
 function renderUsers(users) {
-  const list = document.getElementById('userList');
-  const empty = document.getElementById('emptyState');
-  list.innerHTML = '';
+  const tbody  = document.getElementById('userTableBody');
+  const empty  = document.getElementById('emptyState');
+  tbody.innerHTML = '';
   if (!users || users.length === 0) { empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
-  const roleColors = { Admin: 'bg-black text-white', Editor: 'bg-gray-200 text-gray-700', Viewer: 'bg-gray-100 text-gray-500' };
   users.forEach(u => {
-    const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    const card = document.createElement('div');
-    card.className = 'fade-in bg-white air-shadow rounded-xl border border-black/5 p-4 flex justify-between items-center hover:bg-gray-50 transition-all';
-    card.innerHTML = `
-      <div class="flex items-center gap-4">
-        <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center font-mono text-xs font-bold text-gray-600">${initials}</div>
-        <div>
-          <p class="font-semibold text-sm">${u.name}</p>
-          <p class="font-mono text-xs text-gray-400">${u.email}</p>
+    const initials  = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const isBlack   = ['Admin'].includes(u.role);
+    const avatarCls = isBlack ? 'bg-primary text-on-primary' : 'bg-surface-dim text-on-surface';
+    const tr = document.createElement('tr');
+    tr.className = 'fade-in hover:bg-surface-container-low transition-colors group';
+    tr.innerHTML = `
+      <td class="py-6">
+        <div class="flex items-center gap-md">
+          <div class="w-10 h-10 ${avatarCls} flex items-center justify-center font-label-sm text-label-sm shrink-0">${initials}</div>
+          <div>
+            <p class="font-medium text-primary">${u.name}</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant">${u.email}</p>
+          </div>
         </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="font-mono text-[10px] px-2 py-1 rounded-full ${roleColors[u.role] || 'bg-gray-100 text-gray-500'}">${u.role}</span>
-        <button onclick="editUser(${u.id})" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-          <span class="material-symbols-outlined text-[18px] text-gray-400 hover:text-black">edit</span>
-        </button>
-        <button onclick="deleteUser(${u.id})" class="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
-          <span class="material-symbols-outlined text-[18px] text-gray-400 hover:text-red-500">delete</span>
-        </button>
-      </div>`;
-    list.appendChild(card);
+      </td>
+      <td class="py-6 hidden md:table-cell">
+        <span class="px-2 py-1 bg-surface-container text-on-surface-variant font-label-sm text-label-sm rounded">${u.role}</span>
+      </td>
+      <td class="py-6 text-right">
+        <div class="flex justify-end gap-md">
+          <span onclick="editUser(${u.id})" class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer text-[20px]">edit</span>
+          <span onclick="deleteUser(${u.id})" class="material-symbols-outlined text-on-surface-variant hover:text-error cursor-pointer text-[20px]">delete</span>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
   });
 }
 
-// ── Handle form submit (POST or PUT) ─────────────────────────────
 async function handleSubmit() {
   clearErrors();
   const name  = document.getElementById('inputName').value.trim();
   const email = document.getElementById('inputEmail').value.trim();
   const role  = document.getElementById('inputRole').value;
   let valid = true;
-  if (!name)  { showErr('errName', 'Name is required.');  valid = false; }
+  if (!name)  { showErr('errName',  'Name is required.');  valid = false; }
   if (!email) { showErr('errEmail', 'Email is required.'); valid = false; }
-  if (!role)  { showErr('errRole', 'Role is required.');  valid = false; }
+  if (!role)  { showErr('errRole',  'Role is required.');  valid = false; }
   if (!valid) return;
 
   animateBar();
   const method = editingId ? 'PUT' : 'POST';
   const url    = editingId ? `${API}/${editingId}` : API;
+  const btn    = document.getElementById('submitBtn');
+  btn.textContent = 'PROCESSING...';
+  btn.classList.add('opacity-80');
 
   try {
-    const res  = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, role })
-    });
+    const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, role }) });
     const data = await res.json();
     showResponse(data);
-    if (!data.success) { showFormMsg(data.message, 'error'); return; }
-    showFormMsg(editingId ? '✓ User updated successfully.' : '✓ User created successfully.', 'success');
-    setAction(`${method} /api/users${editingId ? '/' + editingId : ''}`);
-    resetForm();
-    fetchUsers();
+    if (!data.success) {
+      showFormMsg(data.message, 'error');
+      btn.textContent = editingId ? 'UPDATE USER' : 'ADD USER';
+      btn.classList.remove('opacity-80');
+      return;
+    }
+    btn.textContent = 'SUCCESS';
+    btn.classList.replace('bg-primary', 'bg-green-700');
+    setLastAction(`${method} /api/users${editingId ? '/' + editingId : ''}`);
+    setTimeout(() => {
+      btn.classList.replace('bg-green-700', 'bg-primary');
+      btn.classList.remove('opacity-80');
+      resetForm();
+      fetchUsers();
+    }, 1500);
   } catch (err) {
     showFormMsg('Error: ' + err.message, 'error');
+    btn.textContent = editingId ? 'UPDATE USER' : 'ADD USER';
+    btn.classList.remove('opacity-80');
   }
 }
 
-// ── Edit user ─────────────────────────────────────────────────────
 async function editUser(id) {
   animateBar();
   const res  = await fetch(`${API}/${id}`);
   const data = await res.json();
   showResponse(data);
-  setAction(`GET /api/users/${id}`);
+  setLastAction(`GET /api/users/${id}`);
   const u = data.data;
   document.getElementById('inputName').value  = u.name;
   document.getElementById('inputEmail').value = u.email;
   document.getElementById('inputRole').value  = u.role;
-  document.getElementById('editId').value     = u.id;
-  document.getElementById('formTitle').textContent = 'Edit User';
-  document.getElementById('formMode').textContent  = 'PUT';
-  document.getElementById('submitBtn').innerHTML   = '<span class="material-symbols-outlined text-[16px]">save</span> Update User';
+  document.getElementById('formTitle').textContent   = 'Edit User';
+  document.getElementById('formMethod').textContent  = 'PUT';
+  document.getElementById('submitBtn').textContent   = 'UPDATE USER';
   editingId = id;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Delete user ───────────────────────────────────────────────────
 async function deleteUser(id) {
-  if (!confirm('Remove this user?')) return;
+  if (!confirm('Remove this user from the directory?')) return;
   animateBar();
   const res  = await fetch(`${API}/${id}`, { method: 'DELETE' });
   const data = await res.json();
   showResponse(data);
-  setAction(`DELETE /api/users/${id}`);
+  setLastAction(`DELETE /api/users/${id}`);
   fetchUsers();
 }
 
-// ── Reset form ────────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('inputName').value  = '';
   document.getElementById('inputEmail').value = '';
   document.getElementById('inputRole').value  = '';
-  document.getElementById('editId').value     = '';
-  document.getElementById('formTitle').textContent = 'Add User';
-  document.getElementById('formMode').textContent  = 'POST';
-  document.getElementById('submitBtn').innerHTML   = '<span class="material-symbols-outlined text-[16px]">add</span> Add User';
+  document.getElementById('formTitle').textContent  = 'Add User';
+  document.getElementById('formMethod').textContent = 'POST';
+  document.getElementById('submitBtn').textContent  = 'ADD USER';
   editingId = null;
   clearErrors();
   document.getElementById('formMsg').classList.add('hidden');
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
 function showErr(id, msg) {
   const el = document.getElementById(id);
   el.textContent = msg;
@@ -329,13 +442,20 @@ function showFormMsg(msg, type) {
   const el = document.getElementById('formMsg');
   el.textContent = msg;
   el.className = type === 'success'
-    ? 'font-mono text-xs p-3 rounded-lg bg-green-50 text-green-700 border border-green-200'
-    : 'font-mono text-xs p-3 rounded-lg bg-red-50 text-red-700 border border-red-200';
+    ? 'font-label-sm text-label-sm p-3 rounded bg-green-50 text-green-700 border border-green-200'
+    : 'font-label-sm text-label-sm p-3 rounded bg-error-container text-on-error-container border border-red-200';
   el.classList.remove('hidden');
   setTimeout(() => el.classList.add('hidden'), 3000);
 }
 
-// ── Init ──────────────────────────────────────────────────────────
+// Label focus micro-interaction
+document.querySelectorAll('input, select').forEach(input => {
+  const label = input.closest('.space-y-xs')?.querySelector('label');
+  if (!label) return;
+  input.addEventListener('focus', () => label.style.color = '#000000');
+  input.addEventListener('blur',  () => label.style.color = '#444748');
+});
+
 fetchUsers();
 </script>
 </body>
